@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Receipt Manager — Dashboard</title>
+    <meta name="description" content="Admin dashboard for managing receipt records">
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧾</text></svg>">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body class="dashboard-page">
+
+    <!-- ======== TOP BAR ======== -->
+    <header class="topbar">
+        <div class="topbar-left">
+            <div class="topbar-logo">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path
+                        d="M19.5 3.5L18 2l-1.5 1.5L15 2l-1.5 1.5L12 2l-1.5 1.5L9 2 7.5 3.5 6 2 4.5 3.5 3 2v20l1.5-1.5L6 22l1.5-1.5L9 22l1.5-1.5L12 22l1.5-1.5L15 22l1.5-1.5L18 22l1.5-1.5L21 22V2l-1.5 1.5zM19 19.09H5V4.91h14v14.18zM6 15h12v2H6v-2zm0-4h12v2H6v-2zm0-4h12v2H6V7z" />
+                </svg>
+            </div>
+            <span class="topbar-title">Receipt Manager</span>
+        </div>
+        <div class="topbar-right">
+            <div class="user-info">
+                <img id="user-avatar" class="user-avatar" src="" alt="avatar">
+                <span id="user-email" class="user-email"></span>
+            </div>
+            <button id="btn-logout" class="btn-logout">Logout</button>
+        </div>
+    </header>
+
+    <!-- ======== FILTER / TOOLBAR ======== -->
+    <div class="toolbar">
+        <div class="filter-group">
+            <label for="filter-date-from">From</label>
+            <input type="date" id="filter-date-from" class="filter-input">
+        </div>
+        <div class="filter-group">
+            <label for="filter-date-to">To</label>
+            <input type="date" id="filter-date-to" class="filter-input">
+        </div>
+        <div class="filter-group">
+            <label for="filter-name">Name</label>
+            <input type="text" id="filter-name" class="filter-input" placeholder="Filter by name…">
+        </div>
+        <div class="filter-group">
+            <label for="filter-type">Type</label>
+            <input type="text" id="filter-type" class="filter-input" placeholder="Receipt type…">
+        </div>
+        <div class="toolbar-actions">
+            <button id="btn-apply-filter" class="btn btn-secondary">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+                </svg>
+                Filter
+            </button>
+            <button id="btn-clear-filter" class="btn btn-secondary">Clear</button>
+        </div>
+    </div>
+
+    <!-- ======== DATA TABLE ======== -->
+    <div class="table-wrapper" id="table-wrapper">
+        <div class="loading-overlay" id="loading-overlay">
+            <div class="spinner"></div>
+        </div>
+        <table class="data-table" id="data-table">
+            <thead>
+                <tr>
+                    <th>User ID</th>
+                    <th>First Name</th>
+                    <th>Date</th>
+                    <th>Receipt Type</th>
+                    <th>Account #</th>
+                    <th>Location</th>
+                    <th>Plate Number</th>
+                    <th>Car KM</th>
+                    <th>Fuel Liter</th>
+                    <th>Currency</th>
+                    <th>Total Price</th>
+                    <th>Date Input</th>
+                    <th>Image</th>
+                    <th class="col-actions">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="table-body">
+                <!-- Rows rendered by JS -->
+            </tbody>
+        </table>
+
+        <!-- Empty state -->
+        <div class="empty-state" id="empty-state" style="display:none;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path
+                    d="M19.5 3.5L18 2l-1.5 1.5L15 2l-1.5 1.5L12 2l-1.5 1.5L9 2 7.5 3.5 6 2 4.5 3.5 3 2v20l1.5-1.5L6 22l1.5-1.5L9 22l1.5-1.5L12 22l1.5-1.5L15 22l1.5-1.5L18 22l1.5-1.5L21 22V2l-1.5 1.5zM19 19.09H5V4.91h14v14.18zM6 15h12v2H6v-2zm0-4h12v2H6v-2zm0-4h12v2H6V7z" />
+            </svg>
+            <h3>No receipts found</h3>
+            <p>Try adjusting your filters or add a new receipt.</p>
+        </div>
+    </div>
+
+    <!-- ======== PAGINATION ======== -->
+    <div class="pagination-bar">
+        <span class="pagination-info" id="pagination-info">Showing 0 records</span>
+        <div class="pagination-buttons" id="pagination-buttons">
+            <!-- Buttons rendered by JS -->
+        </div>
+    </div>
+
+    <!-- ======== ADD / EDIT MODAL ======== -->
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="modal-title">Add Receipt</h2>
+                <button class="modal-close" id="modal-close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="receipt-form" class="form-grid">
+                    <input type="hidden" id="form-id">
+                    <div class="form-group">
+                        <label for="form-first_name">First Name</label>
+                        <input type="text" id="form-first_name">
+                    </div>
+                    <div class="form-group">
+                        <label for="form-date">Date</label>
+                        <input type="datetime-local" id="form-date">
+                    </div>
+                    <div class="form-group">
+                        <label for="form-receipt_type">Receipt Type</label>
+                        <input type="text" id="form-receipt_type">
+                    </div>
+                    <div class="form-group">
+                        <label for="form-date_input">Date Input</label>
+                        <input type="text" id="form-date_input">
+                    </div>
+                    <div class="form-group">
+                        <label for="form-account_number">Account Number</label>
+                        <input type="text" id="form-account_number">
+                    </div>
+                    <div class="form-group">
+                        <label for="form-plate_number">Plate Number</label>
+                        <input type="text" id="form-plate_number">
+                    </div>
+                    <div class="form-group">
+                        <label for="form-location">Location</label>
+                        <input type="text" id="form-location">
+                    </div>
+                    <div class="form-group">
+                        <label for="form-car_km">Car KM</label>
+                        <input type="text" id="form-car_km">
+                    </div>
+                    <div class="form-group">
+                        <label for="form-fuel_liter">Fuel Liter</label>
+                        <input type="text" id="form-fuel_liter">
+                    </div>
+                    <div class="form-group">
+                        <label for="form-total_price">Total Price</label>
+                        <input type="text" id="form-total_price">
+                    </div>
+                    <div class="form-group">
+                        <label for="form-currency">Currency</label>
+                        <input type="text" id="form-currency">
+                    </div>
+                    <div class="form-group">
+                        <label for="form-id_user">User ID</label>
+                        <input type="text" id="form-id_user">
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="form-thumbnail_link">Image Path (in bucket)</label>
+                        <input type="text" id="form-thumbnail_link" placeholder="e.g. folder/image.jpg">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="modal-cancel-btn">Cancel</button>
+                <button class="btn btn-primary" id="modal-save-btn">Save</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ======== DELETE CONFIRMATION ======== -->
+    <div class="confirm-overlay" id="confirm-overlay">
+        <div class="confirm-box">
+            <h3>Delete Receipt</h3>
+            <p>Are you sure you want to delete this receipt? This action cannot be undone.</p>
+            <div class="confirm-actions">
+                <button class="btn btn-secondary" id="confirm-cancel-btn">Cancel</button>
+                <button class="btn btn-danger" id="confirm-delete-btn">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======== TOASTS ======== -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/supabase-init.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/dashboard.js"></script>
+</body>
+
+</html>

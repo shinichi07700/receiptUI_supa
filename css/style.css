@@ -677,12 +677,11 @@ body {
   display: none;
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.65);
-  backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(6px);
   z-index: 1000;
   align-items: center;
   justify-content: center;
-  animation: fadeIn 0.2s ease;
 }
 
 .modal-overlay.active {
@@ -698,7 +697,6 @@ body {
   max-height: 85vh;
   overflow-y: auto;
   box-shadow: var(--shadow-lg);
-  animation: slideUp 0.3s var(--transition-slow);
 }
 
 .modal-header {
@@ -736,6 +734,37 @@ body {
 
 .modal-body {
   padding: 1.5rem;
+  position: relative;
+  min-height: 200px;
+}
+
+.modal-body.is-loading::after {
+  content: 'Syncing Data...';
+  position: absolute;
+  inset: 0;
+  background: var(--bg-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  color: var(--accent-light);
+  z-index: 10;
+  border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+  animation: pulseOpacity 1.5s infinite ease-in-out;
+}
+
+@keyframes pulseOpacity {
+  0% {
+    opacity: 0.6;
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0.6;
+  }
 }
 
 .modal-footer {
@@ -1017,12 +1046,10 @@ body {
 
 @keyframes slideUp {
   from {
-    opacity: 0;
-    transform: translateY(30px) scale(0.97);
+    transform: translateY(15px) scale(0.98);
   }
 
   to {
-    opacity: 1;
     transform: translateY(0) scale(1);
   }
 }

@@ -109,6 +109,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
+    // Inactivity auto-logoff (10 minutes)
+    setupInactivityTimer();
+
     // Load initial data
     setDefaultDates();
     await loadData();
@@ -126,6 +129,27 @@ function setDefaultDates() {
 
     $('filter-date-from').value = formatDate(twoWeeksAgo);
     $('filter-date-to').value = formatDate(today);
+}
+
+// ========================= INACTIVITY AUTO-LOGOFF =========================
+
+const INACTIVITY_TIMEOUT = 10 * 60 * 1000; // 10 minutes
+let inactivityTimer = null;
+
+function setupInactivityTimer() {
+    const resetTimer = () => {
+        clearTimeout(inactivityTimer);
+        inactivityTimer = setTimeout(async () => {
+            await supabase.auth.signOut();
+            window.location.href = 'index.html';
+        }, INACTIVITY_TIMEOUT);
+    };
+
+    ['mousemove', 'mousedown', 'keydown', 'scroll', 'touchstart', 'click'].forEach(event => {
+        document.addEventListener(event, resetTimer, { passive: true });
+    });
+
+    resetTimer();
 }
 
 // ========================= DATA LOADING =========================
@@ -421,8 +445,15 @@ async function openEditModal(id) {
     editMode = true;
     $('modal-title').textContent = 'Edit Receipt';
 
-    // Fetch the record
-    showLoading(true);
+    // Clear old data immediately so the user doesn't see previous record
+    $('receipt-form').reset();
+    $('form-id').value = '';
+
+    // Show modal IMMEDIATELY to avoid blinking
+    const modalBody = document.querySelector('.modal-body');
+    modalBody.classList.add('is-loading'); // Apply loading FIRST
+    $('modal-overlay').classList.add('active');
+
     try {
         const { data, error } = await supabase
             .from(TABLE_NAME)
@@ -451,7 +482,6 @@ async function openEditModal(id) {
         if (data.date) {
             try {
                 const d = new Date(data.date);
-                // Format for datetime-local input: YYYY-MM-DDTHH:MM
                 const formatted = d.getFullYear() + '-' +
                     String(d.getMonth() + 1).padStart(2, '0') + '-' +
                     String(d.getDate()).padStart(2, '0') + 'T' +
@@ -462,13 +492,12 @@ async function openEditModal(id) {
                 $('form-date').value = '';
             }
         }
-
-        $('modal-overlay').classList.add('active');
     } catch (err) {
         console.error('Error fetching record:', err);
         showToast('Failed to load record: ' + err.message, 'error');
+        closeModal(); // Close if it failed to load
     } finally {
-        showLoading(false);
+        modalBody.classList.remove('is-loading');
     }
 }
 

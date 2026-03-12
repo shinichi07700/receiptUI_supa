@@ -9,6 +9,7 @@ let grandTotalPrice = 0; // Cumulative total for filtered records
 let deleteTargetId = null;
 let editMode = false; // false = add, true = edit
 let selectedIds = new Set();
+let isClaiming = false; // Guard to prevent double execution
 
 // Column definitions for the table
 const COLUMNS = [
@@ -57,10 +58,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     $('modal-cancel-btn').addEventListener('click', closeModal);
     $('modal-save-btn').addEventListener('click', saveRecord);
     $('confirm-cancel-btn').addEventListener('click', closeConfirm);
-    $('confirm-delete-btn').addEventListener('click', confirmDelete);
-    $('claim-cancel-btn').addEventListener('click', closeClaimConfirm);
-    $('claim-confirm-btn').addEventListener('click', claimSelected);
-    $('btn-claim-selected').addEventListener('click', openClaimConfirm);
+    $('confirm-delete-btn').addEventListener('click', (e) => { e.preventDefault(); confirmDelete(); });
+    $('claim-cancel-btn').addEventListener('click', (e) => { e.preventDefault(); closeClaimConfirm(); });
+    $('claim-confirm-btn').addEventListener('click', (e) => { e.preventDefault(); claimSelected(); });
+    $('btn-claim-selected').addEventListener('click', (e) => {
+        e.preventDefault();
+        openClaimConfirm();
+    });
     $('select-all-checkbox').addEventListener('change', toggleSelectAll);
 
     // Close modal on overlay click
@@ -826,8 +830,9 @@ function closeClaimConfirm() {
 }
 
 async function claimSelected() {
-    if (selectedIds.size === 0) return;
+    if (selectedIds.size === 0 || isClaiming) return;
 
+    isClaiming = true;
     showLoading(true);
     closeClaimConfirm();
 

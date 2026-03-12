@@ -8,6 +8,7 @@ let totalCount = 0;
 let grandTotalPrice = 0;
 let deleteTargetId = null;
 let selectedIds = new Set();
+let isUnclaiming = false;
 
 // Column definitions for the table (matches dashboard.js)
 const COLUMNS = [
@@ -46,12 +47,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     $('modal-close-btn').addEventListener('click', closeModal);
     $('modal-cancel-btn').addEventListener('click', closeModal);
     $('modal-save-btn').addEventListener('click', saveRecord);
-    $('confirm-cancel-btn').addEventListener('click', closeConfirm);
-    $('confirm-delete-btn').addEventListener('click', confirmDelete);
+    $('confirm-cancel-btn').addEventListener('click', (e) => { e.preventDefault(); closeConfirm(); });
+    $('confirm-delete-btn').addEventListener('click', (e) => { e.preventDefault(); confirmDelete(); });
     
-    $('unclaim-cancel-btn').addEventListener('click', closeUnclaimConfirm);
-    $('unclaim-confirm-btn').addEventListener('click', unclaimSelected);
-    $('btn-unclaim-selected').addEventListener('click', openUnclaimConfirm);
+    $('unclaim-cancel-btn').addEventListener('click', (e) => { e.preventDefault(); closeUnclaimConfirm(); });
+    $('unclaim-confirm-btn').addEventListener('click', (e) => { e.preventDefault(); unclaimSelected(); });
+    $('btn-unclaim-selected').addEventListener('click', (e) => {
+        e.preventDefault();
+        openUnclaimConfirm();
+    });
     $('select-all-checkbox').addEventListener('change', toggleSelectAll);
 
     // Close modal on overlay click
@@ -333,7 +337,9 @@ function closeUnclaimConfirm() {
 }
 
 async function unclaimSelected() {
-    if (selectedIds.size === 0) return;
+    if (selectedIds.size === 0 || isUnclaiming) return;
+
+    isUnclaiming = true;
     showLoading(true);
     closeUnclaimConfirm();
 

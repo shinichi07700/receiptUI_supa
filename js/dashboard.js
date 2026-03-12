@@ -171,7 +171,7 @@ async function loadData() {
         let query = supabase
             .from(TABLE_NAME)
             .select('*', { count: 'exact' })
-            .order('id', { ascending: false });
+            .order('date_input', { ascending: false });
 
         // Apply filters
         const dateFrom = $('filter-date-from').value;
@@ -353,9 +353,15 @@ function renderTable(rows) {
                 grandCells += `<td></td>`;
             }
         }
+        // Image and Actions
         grandCells += `<td></td><td></td>`;
         grandRow.innerHTML = grandCells;
         tbody.appendChild(grandRow);
+    }
+    
+    // Fix: Always append the summary row if there are rows
+    if (rows.length > 0) {
+        tbody.appendChild(summaryRow);
     }
 
     // Async: resolve signed image URLs after rendering
@@ -625,8 +631,6 @@ const STORAGE_BASE = SUPABASE_URL + '/storage/v1/object/public/' + STORAGE_BUCKE
  */
 async function getImageUrl(path) {
     if (!path) return '';
-
-    let finalUrl = '';
     console.log('[getImageUrl] Processing path:', path);
 
     try {
@@ -821,7 +825,7 @@ function updateSelectionUI() {
 }
 
 function openClaimConfirm() {
-    if (selectedIds.size === 0) return;
+    if (selectedIds.size === 0 || isClaiming) return;
     $('claim-overlay').classList.add('active');
 }
 
@@ -831,7 +835,7 @@ function closeClaimConfirm() {
 
 async function claimSelected() {
     if (selectedIds.size === 0 || isClaiming) return;
-
+    
     isClaiming = true;
     showLoading(true);
     closeClaimConfirm();

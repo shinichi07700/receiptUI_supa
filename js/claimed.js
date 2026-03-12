@@ -63,6 +63,41 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (e.target === $('modal-overlay')) closeModal();
     });
 
+    // Event delegation for image opening
+    document.body.addEventListener('click', (e) => {
+        const wrapper = e.target.closest('.img-hover-wrapper');
+        if (wrapper && wrapper.dataset.fullUrl) {
+            e.preventDefault();
+            e.stopPropagation();
+            const url = wrapper.dataset.fullUrl;
+            const previewWin = window.open('', '_blank');
+            if (previewWin) {
+                previewWin.document.write(`
+                    <html>
+                    <head>
+                        <title>Receipt Preview</title>
+                        <style>
+                            body { margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #08080a; color: white; font-family: sans-serif; min-height: 100vh; }
+                            .toolbar { position: fixed; top: 0; width: 100%; background: rgba(13,13,22,0.9); padding: 10px; display: flex; justify-content: center; gap: 20px; backdrop-filter: blur(10px); z-index: 10; }
+                            img { max-width: 95vw; max-height: 85vh; object-fit: contain; margin-top: 60px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); border-radius: 8px; }
+                            .btn { padding: 8px 16px; background: #6366f1; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+                            .btn:hover { background: #818cf8; }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="toolbar">
+                            <button class="btn" onclick="window.print()">Print Receipt</button>
+                            <button class="btn" onclick="window.close()" style="background:#333">Close</button>
+                        </div>
+                        <img src="${url}" alt="Receipt">
+                    </body>
+                    </html>
+                `);
+                previewWin.document.close();
+            }
+        }
+    });
+
     // Inactivity auto-logoff (10 minutes)
     setupInactivityTimer();
 
@@ -79,7 +114,7 @@ async function loadData() {
         let query = supabase
             .from(CLAIMED_TABLE_NAME)
             .select('*', { count: 'exact' })
-            .order('claimed_at', { ascending: false });
+            .order('date_input', { ascending: false });
 
         // Apply filters
         const dateFrom = $('filter-date-from').value;
@@ -176,9 +211,13 @@ function renderTable(rows) {
         let imageCell = '<td style="text-align:center">—</td>';
         if (thumbPath) {
             imageCell = `<td style="text-align:center">
-              <div class="img-hover-wrapper" data-img-path="${escapeHtml(thumbPath)}" data-full-path="${escapeHtml(fullPath)}">
+              <div class="img-hover-wrapper" 
+                   data-img-path="${escapeHtml(thumbPath)}"
+                   data-full-path="${escapeHtml(fullPath)}">
                 <div class="img-cell-placeholder">⏳</div>
-                <div class="img-hover-tooltip"><div class="img-hover-loading">Loading preview...</div></div>
+                <div class="img-hover-tooltip">
+                  <div class="img-hover-loading">Loading preview...</div>
+                </div>
               </div>
             </td>`;
         }
@@ -219,13 +258,12 @@ function renderTable(rows) {
     // Image, Claimed At, Claimed By, Actions
     footerCells += `<td></td><td></td><td></td><td></td>`;
     summaryRow.innerHTML = footerCells;
-    tbody.appendChild(summaryRow);
-
     // Grand Total if last page
     const isLastPage = (currentPage * PAGE_SIZE) >= totalCount;
     if (isLastPage && totalCount > PAGE_SIZE) {
         const grandRow = document.createElement('tr');
         grandRow.className = 'summary-row grand-total-row';
+
         let grandCells = `<td class="col-checkbox"></td>`;
         for (let i = 0; i < COLUMNS.length; i++) {
             if (i === priceColIndex) {
@@ -236,11 +274,18 @@ function renderTable(rows) {
                 grandCells += `<td></td>`;
             }
         }
+        // Image, Claimed At, Claimed By, Actions
         grandCells += `<td></td><td></td><td></td><td></td>`;
         grandRow.innerHTML = grandCells;
         tbody.appendChild(grandRow);
     }
 
+    // Fix: Always append the summary row if there are rows
+    if (rows.length > 0) {
+        tbody.appendChild(summaryRow);
+    }
+
+    // Async: resolve signed image URLs after rendering
     loadImagePreviews();
 }
 
@@ -354,14 +399,10 @@ async function unclaimSelected() {
 
         if (fetchError) throw fetchError;
 
-        // 2. Prepare data for main table (strip claimed metadata)
+        // 2. Prepare data for main table (strip claimed-only metadata)
         const unclaimedRecords = records.map(r => {
             const { id, original_id, claimed_at, claimed_by, created_at, ...rest } = r;
-            return {
-                ...rest,
-                // If we have original_id, we could try to restore it, but it might conflict if it was re-used.
-                // Best to let Supabase assign a new ID or just insert.
-            };
+            return rest;
         });
 
         // 3. Insert into main table
@@ -492,27 +533,47 @@ async function confirmDelete() {
 
 // ========================= HELPERS =========================
 
+/**
+ * Get a displayable image URL (Robust version synced from dashboard.js).
+ */
 async function getImageUrl(path) {
     if (!path) return '';
+    let finalUrl = '';
     try {
-        let filePath = path;
-        if (path.includes('/storage/v1/object/public/')) {
-            filePath = path.split('/' + STORAGE_BUCKET + '/')[1].split('?')[0];
-        } else if (path.startsWith(STORAGE_BUCKET + '/')) {
-            filePath = path.substring(STORAGE_BUCKET.length + 1);
+        if (path.includes('/storage/v1/object/')) {
+            const bucketSearch = '/' + STORAGE_BUCKET + '/';
+            const parts = path.split(bucketSearch);
+            let filePath = parts.length > 1 ? parts[1].split('?')[0] : path;
+            if (filePath.startsWith('http')) {
+                const urlParts = filePath.split('/');
+                const bucketIdx = urlParts.indexOf(STORAGE_BUCKET);
+                if (bucketIdx !== -1) {
+                    filePath = urlParts.slice(bucketIdx + 1).join('/').split('?')[0];
+                }
+            }
+            const { data, error } = await supabase.storage.from(STORAGE_BUCKET).createSignedUrl(filePath, 3600);
+            finalUrl = data?.signedUrl || '';
         }
-        
-        if (filePath.startsWith('http')) return filePath;
-
-        const { data, error } = await supabase.storage.from(STORAGE_BUCKET).createSignedUrl(filePath, 3600);
-        let url = data?.signedUrl || '';
-        if (url) {
-            const urlObj = new URL(url);
+        else if (path.includes('drive.google.com/thumbnail') || path.includes('drive.google.com/file/d/')) {
+            const match = path.match(/[?&]id=([^&]+)/) || path.match(/\/d\/([^/]+)/);
+            if (match) finalUrl = `https://lh3.googleusercontent.com/d/${match[1]}=w400`;
+        }
+        else if (path.startsWith('http')) {
+            finalUrl = path;
+        }
+        else {
+            let filePath = path;
+            if (filePath.startsWith(STORAGE_BUCKET + '/')) filePath = filePath.substring(STORAGE_BUCKET.length + 1);
+            const { data, error } = await supabase.storage.from(STORAGE_BUCKET).createSignedUrl(filePath, 3600);
+            finalUrl = data?.signedUrl || '';
+        }
+        if (finalUrl && (finalUrl.includes('token=') || finalUrl.includes('/storage/v1/object/'))) {
+            const urlObj = new URL(finalUrl);
             urlObj.searchParams.set('download', 'false');
-            url = urlObj.toString();
+            finalUrl = urlObj.toString();
         }
-        return url;
-    } catch (e) { return ''; }
+        return finalUrl;
+    } catch (err) { return ''; }
 }
 
 function clearFilters() {

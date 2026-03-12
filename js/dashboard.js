@@ -348,46 +348,6 @@ function renderTable(rows) {
             footerCells += `<td class="summary-total">${totalPriceSum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>`;
         } else if (i === priceColIndex - 1) {
             footerCells += `<td style="text-align:right; font-weight:bold; color:var(--text-secondary)">TOTAL</td>`;
-        } else {
-            footerCells += `<td></td>`;
-        }
-    }
-    // Plus Image and Actions columns
-    footerCells += `<td></td><td></td>`;
-
-    summaryRow.innerHTML = footerCells;
-    tbody.appendChild(summaryRow);
-
-    // Add Grand Total row if it's the LAST page
-    const isLastPage = (currentPage * PAGE_SIZE) >= totalCount;
-    if (isLastPage && totalCount > PAGE_SIZE) {
-        const grandRow = document.createElement('tr');
-        grandRow.className = 'summary-row grand-total-row';
-
-        let grandCells = `<td class="col-checkbox"></td>`;
-        for (let i = 0; i < COLUMNS.length; i++) {
-            if (i === priceColIndex) {
-                grandCells += `<td class="summary-total" style="border-bottom-color:var(--success)">${grandTotalPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>`;
-            } else if (i === priceColIndex - 1) {
-                grandCells += `<td style="text-align:right; font-weight:900; color:var(--success)">GRAND TOTAL</td>`;
-            } else {
-                grandCells += `<td></td>`;
-            }
-        }
-        // Image and Actions
-        grandCells += `<td></td><td></td>`;
-        grandRow.innerHTML = grandCells;
-        tbody.appendChild(grandRow);
-    }
-    
-    // Fix: Always append the summary row if there are rows
-    if (rows.length > 0) {
-        tbody.appendChild(summaryRow);
-    }
-
-    // Async: resolve signed image URLs after rendering
-    loadImagePreviews();
-}
 
 /**
  * Load signed image URLs for hover tooltips and click-to-open.

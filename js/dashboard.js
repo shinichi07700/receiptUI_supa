@@ -30,8 +30,12 @@ const COLUMNS = [
 // --------------- DOM Refs ---------------
 const $ = (id) => document.getElementById(id);
 
+let isInitialized = false;
+
 // --------------- Initialize ---------------
 document.addEventListener('DOMContentLoaded', async () => {
+    if (isInitialized) return;
+    isInitialized = true;
     console.log('Dashboard initializing...');
     const session = await requireAuth();
     if (!session) {

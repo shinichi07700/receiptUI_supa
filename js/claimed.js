@@ -28,8 +28,12 @@ const COLUMNS = [
 
 const $ = (id) => document.getElementById(id);
 
+let isInitialized = false;
+
 // --------------- Initialize ---------------
 document.addEventListener('DOMContentLoaded', async () => {
+    if (isInitialized) return;
+    isInitialized = true;
     console.log('Claimed dashboard initializing...');
     const session = await requireAuth();
     if (!session) return;

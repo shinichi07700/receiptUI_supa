@@ -50,10 +50,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     $('confirm-cancel-btn').addEventListener('click', (e) => { e.preventDefault(); closeConfirm(); });
     $('confirm-delete-btn').addEventListener('click', (e) => { e.preventDefault(); confirmDelete(); });
     
-    $('unclaim-cancel-btn').addEventListener('click', (e) => { e.preventDefault(); closeUnclaimConfirm(); });
-    $('unclaim-confirm-btn').addEventListener('click', (e) => { e.preventDefault(); unclaimSelected(); });
+    $('unclaim-cancel-btn').addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); closeUnclaimConfirm(); });
+    $('unclaim-confirm-btn').addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); unclaimSelected(); });
     $('btn-unclaim-selected').addEventListener('click', (e) => {
         e.preventDefault();
+        e.stopPropagation();
         openUnclaimConfirm();
     });
     $('select-all-checkbox').addEventListener('change', toggleSelectAll);

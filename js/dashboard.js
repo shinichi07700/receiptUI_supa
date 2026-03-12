@@ -59,10 +59,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     $('modal-save-btn').addEventListener('click', saveRecord);
     $('confirm-cancel-btn').addEventListener('click', closeConfirm);
     $('confirm-delete-btn').addEventListener('click', (e) => { e.preventDefault(); confirmDelete(); });
-    $('claim-cancel-btn').addEventListener('click', (e) => { e.preventDefault(); closeClaimConfirm(); });
-    $('claim-confirm-btn').addEventListener('click', (e) => { e.preventDefault(); claimSelected(); });
+    $('claim-cancel-btn').addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); closeClaimConfirm(); });
+    $('claim-confirm-btn').addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); claimSelected(); });
     $('btn-claim-selected').addEventListener('click', (e) => {
         e.preventDefault();
+        e.stopPropagation();
         openClaimConfirm();
     });
     $('select-all-checkbox').addEventListener('change', toggleSelectAll);

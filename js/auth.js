@@ -7,6 +7,13 @@
  * Sign in with Google OAuth.
  */
 async function signInWithGoogle() {
+    // Logic: OAuth (Google Login) requires a web server context. 
+    // It will not work if the file is opened directly via file://
+    if (window.location.protocol === 'file:') {
+        showLoginError('Google Sign-In requires a running server. Please open this via localhost (e.g. http://localhost:8000) instead of opening the file directly.');
+        return;
+    }
+
     const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {

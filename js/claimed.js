@@ -57,6 +57,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         e.stopPropagation();
         openUnclaimConfirm();
     });
+
+    // Close on overlay click, but isolate the box
+    $('unclaim-overlay').addEventListener('click', (e) => {
+        if (e.target === $('unclaim-overlay')) closeUnclaimConfirm();
+    });
+    document.querySelector('#unclaim-overlay .confirm-box').addEventListener('click', (e) => {
+        e.stopPropagation();
+    });
     $('select-all-checkbox').addEventListener('change', toggleSelectAll);
 
     // Close modal on overlay click

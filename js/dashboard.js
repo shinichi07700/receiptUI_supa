@@ -602,40 +602,7 @@ async function saveRecord() {
     }
 }
 
-// ========================= DELETE =========================
-
-function openDeleteConfirm(id) {
-    deleteTargetId = id;
-    $('confirm-overlay').classList.add('active');
-}
-
-function closeConfirm() {
-    deleteTargetId = null;
-    $('confirm-overlay').classList.remove('active');
-}
-
-async function confirmDelete() {
-    if (!deleteTargetId) return;
-
-    showLoading(true);
-    try {
-        const { error } = await supabase
-            .from(TABLE_NAME)
-            .delete()
-            .eq('id', deleteTargetId);
-
-        if (error) throw error;
-
-        showToast('Receipt deleted', 'success');
-        closeConfirm();
-        await loadData();
-    } catch (err) {
-        console.error('Error deleting:', err);
-        showToast('Failed to delete: ' + err.message, 'error');
-    } finally {
-        showLoading(false);
-    }
-}
+// Consolidated below
 
 // ========================= IMAGE PREVIEW =========================
 
@@ -773,40 +740,7 @@ function escapeJs(str) {
     return str.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"');
 }
 
-// ========================= DELETE =========================
-
-function openDeleteConfirm(id) {
-    deleteTargetId = id;
-    $('confirm-overlay').classList.add('active');
-}
-
-function closeConfirm() {
-    deleteTargetId = null;
-    $('confirm-overlay').classList.remove('active');
-}
-
-async function confirmDelete() {
-    if (!deleteTargetId) return;
-
-    showLoading(true);
-    try {
-        const { error } = await supabase
-            .from(TABLE_NAME)
-            .delete()
-            .eq('id', deleteTargetId);
-
-        if (error) throw error;
-
-        showToast('Receipt deleted', 'success');
-        closeConfirm();
-        await loadData();
-    } catch (err) {
-        console.error('Error deleting:', err);
-        showToast('Failed to delete: ' + err.message, 'error');
-    } finally {
-        showLoading(false);
-    }
-}
+// Consolidated below
 // ========================= CLAIM LOGIC =========================
 
 function toggleRowSelection(id, checked) {
@@ -921,5 +855,44 @@ async function claimSelected() {
         showLoading(false);
         isClaiming = false;
         console.log('[DEBUG] claimSelected finally: isClaiming reset to false');
+    }
+}
+
+// ========================= DELETE =========================
+
+function openDeleteConfirm(id) {
+    console.log('[DEBUG] openDeleteConfirm called for id:', id);
+    deleteTargetId = id;
+    $('confirm-overlay').classList.add('active');
+}
+
+function closeConfirm() {
+    console.log('[DEBUG] closeConfirm called');
+    deleteTargetId = null;
+    $('confirm-overlay').classList.remove('active');
+}
+
+async function confirmDelete() {
+    if (!deleteTargetId) return;
+
+    console.log('[DEBUG] confirmDelete initiated for id:', deleteTargetId);
+    showLoading(true);
+    try {
+        const { error } = await supabase
+            .from(TABLE_NAME)
+            .delete()
+            .eq('id', deleteTargetId);
+
+        if (error) throw error;
+
+        showToast('Receipt deleted', 'success');
+        closeConfirm();
+        await loadData();
+        console.log('[DEBUG] confirmDelete completed successfully');
+    } catch (err) {
+        console.error('[DEBUG] Error deleting:', err);
+        showToast('Failed to delete: ' + err.message, 'error');
+    } finally {
+        showLoading(false);
     }
 }

@@ -8,6 +8,7 @@ let totalCount = 0;
 let grandTotalPrice = 0; // Cumulative total for filtered records
 let deleteTargetId = null;
 let editMode = false; // false = add, true = edit
+let selectedIds = new Set();
 
 // Column definitions for the table
 const COLUMNS = [
@@ -57,6 +58,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     $('modal-save-btn').addEventListener('click', saveRecord);
     $('confirm-cancel-btn').addEventListener('click', closeConfirm);
     $('confirm-delete-btn').addEventListener('click', confirmDelete);
+    $('claim-cancel-btn').addEventListener('click', closeClaimConfirm);
+    $('claim-confirm-btn').addEventListener('click', claimSelected);
+    $('btn-claim-selected').addEventListener('click', openClaimConfirm);
+    $('select-all-checkbox').addEventListener('change', toggleSelectAll);
 
     // Close modal on overlay click
     $('modal-overlay').addEventListener('click', (e) => {
@@ -205,6 +210,10 @@ async function loadData() {
         grandTotalPrice = (allPrices || []).reduce((sum, item) => sum + (parseFloat(item.total_price) || 0), 0);
         totalCount = count || 0;
 
+        // Clear selection on data reload (optional, but safer)
+        selectedIds.clear();
+        updateSelectionUI();
+
         renderTable(data || []);
         renderPagination();
 
@@ -236,6 +245,16 @@ function renderTable(rows) {
         // Calculate total sum (handle potential invalid numbers)
         const price = parseFloat(row.total_price) || 0;
         totalPriceSum += price;
+
+        const isChecked = selectedIds.has(row.id);
+        const checkboxCell = `
+            <td class="col-checkbox">
+                <label class="custom-checkbox">
+                    <input type="checkbox" class="row-checkbox" data-id="${row.id}" ${isChecked ? 'checked' : ''} onchange="toggleRowSelection(${row.id}, this.checked)">
+                    <span class="checkmark"></span>
+                </label>
+            </td>
+        `;
 
         const cells = COLUMNS.map(col => {
             let value = row[col.key] ?? '';
@@ -287,7 +306,7 @@ function renderTable(rows) {
       </div>
     </td>`;
 
-        return `<tr>${cells}${imageCell}${actionsCell}</tr>`;
+        return `<tr>${checkboxCell}${cells}${imageCell}${actionsCell}</tr>`;
     }).join('');
 
     // Add footer summary row
@@ -298,7 +317,7 @@ function renderTable(rows) {
     const priceColIndex = COLUMNS.findIndex(c => c.key === 'total_price');
 
     // Create cells for summary row
-    let footerCells = '';
+    let footerCells = `<td class="col-checkbox"></td>`; // Empty for checkbox col
     for (let i = 0; i < COLUMNS.length; i++) {
         if (i === priceColIndex) {
             footerCells += `<td class="summary-total">${totalPriceSum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>`;
@@ -320,7 +339,7 @@ function renderTable(rows) {
         const grandRow = document.createElement('tr');
         grandRow.className = 'summary-row grand-total-row';
 
-        let grandCells = '';
+        let grandCells = `<td class="col-checkbox"></td>`;
         for (let i = 0; i < COLUMNS.length; i++) {
             if (i === priceColIndex) {
                 grandCells += `<td class="summary-total" style="border-bottom-color:var(--success)">${grandTotalPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>`;
@@ -756,6 +775,108 @@ async function confirmDelete() {
     } catch (err) {
         console.error('Error deleting:', err);
         showToast('Failed to delete: ' + err.message, 'error');
+    } finally {
+        showLoading(false);
+    }
+}
+// ========================= CLAIM LOGIC =========================
+
+function toggleRowSelection(id, checked) {
+    if (checked) {
+        selectedIds.add(id);
+    } else {
+        selectedIds.delete(id);
+    }
+    updateSelectionUI();
+}
+
+function toggleSelectAll(e) {
+    const checked = e.target.checked;
+    const checkboxes = document.querySelectorAll('.row-checkbox');
+    checkboxes.forEach(cb => {
+        const id = parseInt(cb.dataset.id);
+        cb.checked = checked;
+        if (checked) {
+            selectedIds.add(id);
+        } else {
+            selectedIds.delete(id);
+        }
+    });
+    updateSelectionUI();
+}
+
+function updateSelectionUI() {
+    const count = selectedIds.size;
+    $('selected-count').textContent = count;
+    $('btn-claim-selected').disabled = (count === 0);
+
+    // Update select-all checkbox state
+    const checkboxes = document.querySelectorAll('.row-checkbox');
+    const allChecked = checkboxes.length > 0 && Array.from(checkboxes).every(cb => cb.checked);
+    $('select-all-checkbox').checked = allChecked;
+}
+
+function openClaimConfirm() {
+    if (selectedIds.size === 0) return;
+    $('claim-overlay').classList.add('active');
+}
+
+function closeClaimConfirm() {
+    $('claim-overlay').classList.remove('active');
+}
+
+async function claimSelected() {
+    if (selectedIds.size === 0) return;
+
+    showLoading(true);
+    closeClaimConfirm();
+
+    try {
+        const idsToClaim = Array.from(selectedIds);
+        const adminEmail = $('user-email').textContent;
+
+        console.log('Claiming IDs:', idsToClaim);
+
+        // 1. Fetch data for these IDs
+        const { data: records, error: fetchError } = await supabase
+            .from(TABLE_NAME)
+            .select('*')
+            .in('id', idsToClaim);
+
+        if (fetchError) throw fetchError;
+
+        // 2. Prepare data for claimed table
+        const claimedRecords = records.map(r => {
+            const { id, created_at, ...rest } = r; // Strip ID and created_at
+            return {
+                ...rest,
+                original_id: id,
+                claimed_by: adminEmail,
+                claimed_at: new Date().toISOString()
+            };
+        });
+
+        // 3. Insert into claimed table
+        const { error: insertError } = await supabase
+            .from(CLAIMED_TABLE_NAME)
+            .insert(claimedRecords);
+
+        if (insertError) throw insertError;
+
+        // 4. Delete from main table
+        const { error: deleteError } = await supabase
+            .from(TABLE_NAME)
+            .delete()
+            .in('id', idsToClaim);
+
+        if (deleteError) throw deleteError;
+
+        showToast(`Successfully claimed ${idsToClaim.length} receipts`, 'success');
+        selectedIds.clear();
+        await loadData();
+    } catch (err) {
+        console.error('Error claiming receipts:', err);
+        showToast('Failed to claim: ' + err.message, 'error');
     } finally {
         showLoading(false);
     }

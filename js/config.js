@@ -17,8 +17,9 @@ const ALLOWED_EMAILS = [
 // Supabase Storage bucket for receipt images
 const STORAGE_BUCKET = 'receipts';
 
-// Table name
+// Table names
 const TABLE_NAME = 'receipt_inter';
+const CLAIMED_TABLE_NAME = 'receipt_inter_claimed';
 
 // Page size for pagination
 const PAGE_SIZE = 50;

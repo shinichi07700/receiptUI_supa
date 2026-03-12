@@ -382,16 +382,26 @@ function updateSelectionUI() {
 }
 
 function openUnclaimConfirm() {
-    if (selectedIds.size === 0) return;
+    console.log('[DEBUG] openUnclaimConfirm called');
+    if (selectedIds.size === 0 || isUnclaiming) {
+        console.log('[DEBUG] openUnclaimConfirm aborted:', { size: selectedIds.size, isUnclaiming });
+        return;
+    }
     $('unclaim-overlay').classList.add('active');
+    console.log('[DEBUG] unclaim-overlay active');
 }
 
 function closeUnclaimConfirm() {
+    console.log('[DEBUG] closeUnclaimConfirm called');
     $('unclaim-overlay').classList.remove('active');
 }
 
 async function unclaimSelected() {
-    if (selectedIds.size === 0 || isUnclaiming) return;
+    console.log('[DEBUG] unclaimSelected initiated');
+    if (selectedIds.size === 0 || isUnclaiming) {
+        console.log('[DEBUG] unclaimSelected aborted:', { size: selectedIds.size, isUnclaiming });
+        return;
+    }
 
     isUnclaiming = true;
     showLoading(true);
@@ -432,11 +442,14 @@ async function unclaimSelected() {
         showToast(`Successfully unclaimed ${idsToUnclaim.length} receipts`, 'success');
         selectedIds.clear();
         await loadData();
+        console.log('[DEBUG] unclaimSelected completed successfully');
     } catch (err) {
         console.error('Error unclaiming:', err);
         showToast('Failed to unclaim: ' + err.message, 'error');
     } finally {
         showLoading(false);
+        isUnclaiming = false;
+        console.log('[DEBUG] unclaimSelected finally: isUnclaiming reset to false');
     }
 }
 

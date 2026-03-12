@@ -834,16 +834,26 @@ function updateSelectionUI() {
 }
 
 function openClaimConfirm() {
-    if (selectedIds.size === 0 || isClaiming) return;
+    console.log('[DEBUG] openClaimConfirm called');
+    if (selectedIds.size === 0 || isClaiming) {
+        console.log('[DEBUG] openClaimConfirm aborted:', { size: selectedIds.size, isClaiming });
+        return;
+    }
     $('claim-overlay').classList.add('active');
+    console.log('[DEBUG] claim-overlay active');
 }
 
 function closeClaimConfirm() {
+    console.log('[DEBUG] closeClaimConfirm called');
     $('claim-overlay').classList.remove('active');
 }
 
 async function claimSelected() {
-    if (selectedIds.size === 0 || isClaiming) return;
+    console.log('[DEBUG] claimSelected initiated');
+    if (selectedIds.size === 0 || isClaiming) {
+        console.log('[DEBUG] claimSelected aborted:', { size: selectedIds.size, isClaiming });
+        return;
+    }
     
     isClaiming = true;
     showLoading(true);
@@ -865,7 +875,7 @@ async function claimSelected() {
 
         // 2. Prepare data for claimed table
         const claimedRecords = records.map(r => {
-            const { id, created_at, ...rest } = r; // Strip ID and created_at
+            const { id, created_at, ...rest } = r;
             return {
                 ...rest,
                 original_id: id,
@@ -892,10 +902,13 @@ async function claimSelected() {
         showToast(`Successfully claimed ${idsToClaim.length} receipts`, 'success');
         selectedIds.clear();
         await loadData();
+        console.log('[DEBUG] claimSelected completed successfully');
     } catch (err) {
         console.error('Error claiming receipts:', err);
         showToast('Failed to claim: ' + err.message, 'error');
     } finally {
         showLoading(false);
+        isClaiming = false;
+        console.log('[DEBUG] claimSelected finally: isClaiming reset to false');
     }
 }

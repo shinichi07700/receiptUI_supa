@@ -58,21 +58,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     $('modal-cancel-btn').addEventListener('click', closeModal);
     $('modal-save-btn').addEventListener('click', saveRecord);
     $('confirm-cancel-btn').addEventListener('click', closeConfirm);
-    $('confirm-delete-btn').addEventListener('click', (e) => { e.preventDefault(); confirmDelete(); });
-    $('claim-cancel-btn').addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); closeClaimConfirm(); });
-    $('claim-confirm-btn').addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); claimSelected(); });
-    $('btn-claim-selected').addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        openClaimConfirm();
-    });
+    $('confirm-delete-btn').addEventListener('click', confirmDelete);
+    $('claim-cancel-btn').addEventListener('click', closeClaimConfirm);
+    $('claim-confirm-btn').addEventListener('click', claimSelected);
+    $('btn-claim-selected').addEventListener('click', openClaimConfirm);
 
-    // Close on overlay click, but isolate the box
+    // Close on overlay click
     $('claim-overlay').addEventListener('click', (e) => {
         if (e.target === $('claim-overlay')) closeClaimConfirm();
     });
-    document.querySelector('#claim-overlay .confirm-box').addEventListener('click', (e) => {
-        e.stopPropagation();
+    $('confirm-overlay').addEventListener('click', (e) => {
+        if (e.target === $('confirm-overlay')) closeConfirm();
     });
     $('select-all-checkbox').addEventListener('change', toggleSelectAll);
 
@@ -263,7 +259,7 @@ function renderTable(rows) {
         const checkboxCell = `
             <td class="col-checkbox">
                 <label class="custom-checkbox">
-                    <input type="checkbox" class="row-checkbox" data-id="${row.id}" ${isChecked ? 'checked' : ''} onchange="toggleRowSelection(${row.id}, this.checked)">
+                    <input type="checkbox" class="row-checkbox" data-id="${row.id}" ${isChecked ? 'checked' : ''} onchange="event.stopPropagation(); toggleRowSelection(${row.id}, this.checked)">
                     <span class="checkmark"></span>
                 </label>
             </td>

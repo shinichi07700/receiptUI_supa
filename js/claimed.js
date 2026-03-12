@@ -47,23 +47,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     $('modal-close-btn').addEventListener('click', closeModal);
     $('modal-cancel-btn').addEventListener('click', closeModal);
     $('modal-save-btn').addEventListener('click', saveRecord);
-    $('confirm-cancel-btn').addEventListener('click', (e) => { e.preventDefault(); closeConfirm(); });
-    $('confirm-delete-btn').addEventListener('click', (e) => { e.preventDefault(); confirmDelete(); });
+    $('confirm-cancel-btn').addEventListener('click', closeConfirm);
+    $('confirm-delete-btn').addEventListener('click', confirmDelete);
     
-    $('unclaim-cancel-btn').addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); closeUnclaimConfirm(); });
-    $('unclaim-confirm-btn').addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); unclaimSelected(); });
-    $('btn-unclaim-selected').addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        openUnclaimConfirm();
-    });
+    $('unclaim-cancel-btn').addEventListener('click', closeUnclaimConfirm);
+    $('unclaim-confirm-btn').addEventListener('click', unclaimSelected);
+    $('btn-unclaim-selected').addEventListener('click', openUnclaimConfirm);
 
     // Close on overlay click, but isolate the box
+    // Close on overlay click
     $('unclaim-overlay').addEventListener('click', (e) => {
         if (e.target === $('unclaim-overlay')) closeUnclaimConfirm();
     });
-    document.querySelector('#unclaim-overlay .confirm-box').addEventListener('click', (e) => {
-        e.stopPropagation();
+    $('confirm-overlay').addEventListener('click', (e) => {
+        if (e.target === $('confirm-overlay')) closeConfirm();
     });
     $('select-all-checkbox').addEventListener('change', toggleSelectAll);
 
@@ -194,7 +191,7 @@ function renderTable(rows) {
         const checkboxCell = `
             <td class="col-checkbox">
                 <label class="custom-checkbox">
-                    <input type="checkbox" class="row-checkbox" data-id="${row.id}" ${isChecked ? 'checked' : ''} onchange="toggleRowSelection(${row.id}, this.checked)">
+                    <input type="checkbox" class="row-checkbox" data-id="${row.id}" ${isChecked ? 'checked' : ''} onchange="event.stopPropagation(); toggleRowSelection(${row.id}, this.checked)">
                     <span class="checkmark"></span>
                 </label>
             </td>

@@ -65,16 +65,28 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Close on overlay click
     $('claim-overlay').addEventListener('click', (e) => {
-        if (e.target === $('claim-overlay')) closeClaimConfirm();
+        console.log('[DEBUG] claim-overlay clicked', { target: e.target, currentTarget: e.currentTarget });
+        if (e.target === $('claim-overlay')) {
+            console.log('[DEBUG] claim-overlay background clicked, closing');
+            closeClaimConfirm();
+        }
     });
     $('confirm-overlay').addEventListener('click', (e) => {
-        if (e.target === $('confirm-overlay')) closeConfirm();
+        console.log('[DEBUG] confirm-overlay clicked', { target: e.target, currentTarget: e.currentTarget });
+        if (e.target === $('confirm-overlay')) {
+            console.log('[DEBUG] confirm-overlay background clicked, closing');
+            closeConfirm();
+        }
     });
     $('select-all-checkbox').addEventListener('change', toggleSelectAll);
 
     // Close modal on overlay click
     $('modal-overlay').addEventListener('click', (e) => {
-        if (e.target === $('modal-overlay')) closeModal();
+        console.log('[DEBUG] modal-overlay clicked', { target: e.target, currentTarget: e.currentTarget });
+        if (e.target === $('modal-overlay')) {
+            console.log('[DEBUG] modal-overlay background clicked, closing');
+            closeModal();
+        }
     });
 
     // Allow filter on Enter key
@@ -484,6 +496,7 @@ async function openEditModal(id) {
     $('form-id').value = '';
 
     // Show modal IMMEDIATELY to avoid blinking
+    console.log('[DEBUG] openEditModal: adding active to modal-overlay');
     const modalBody = document.querySelector('.modal-body');
     modalBody.classList.add('is-loading'); // Apply loading FIRST
     $('modal-overlay').classList.add('active');
@@ -536,6 +549,8 @@ async function openEditModal(id) {
 }
 
 function closeModal() {
+    console.log('[DEBUG] closeModal called');
+    console.trace();
     $('modal-overlay').classList.remove('active');
 }
 

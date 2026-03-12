@@ -380,16 +380,13 @@ function updateSelectionUI() {
 
 function openUnclaimConfirm() {
     console.log('[DEBUG] openUnclaimConfirm called');
-    if (selectedIds.size === 0 || isUnclaiming) {
-        console.log('[DEBUG] openUnclaimConfirm aborted:', { size: selectedIds.size, isUnclaiming });
-        return;
-    }
+    if (selectedIds.size === 0 || isUnclaiming) return;
     $('unclaim-overlay').classList.add('active');
-    console.log('[DEBUG] unclaim-overlay active');
 }
 
 function closeUnclaimConfirm() {
     console.log('[DEBUG] closeUnclaimConfirm called');
+    console.trace();
     $('unclaim-overlay').classList.remove('active');
 }
 
@@ -530,6 +527,7 @@ function openDeleteConfirm(id) {
 }
 
 function closeConfirm() {
+    console.log('[DEBUG] closeConfirm called (claimed)');
     deleteTargetId = null;
     $('confirm-overlay').classList.remove('active');
 }

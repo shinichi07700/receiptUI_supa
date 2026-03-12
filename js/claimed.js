@@ -45,12 +45,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     else $('user-avatar').style.display = 'none';
 
     // Event listeners
-    $('btn-logout').addEventListener('click', signOut);
-    $('btn-apply-filter').addEventListener('click', () => { currentPage = 1; loadData(); });
-    $('btn-clear-filter').addEventListener('click', clearFilters);
-    $('modal-close-btn').addEventListener('click', closeModal);
-    $('modal-cancel-btn').addEventListener('click', closeModal);
-    $('modal-save-btn').addEventListener('click', saveRecord);
+    $('btn-logout').addEventListener('click', (e) => { e.preventDefault(); signOut(); });
+    $('btn-apply-filter').addEventListener('click', (e) => { e.preventDefault(); currentPage = 1; loadData(); });
+    $('btn-clear-filter').addEventListener('click', (e) => { e.preventDefault(); clearFilters(); });
+    $('modal-close-btn').addEventListener('click', (e) => { e.preventDefault(); closeModal(); });
+    $('modal-cancel-btn').addEventListener('click', (e) => { e.preventDefault(); closeModal(); });
+    $('modal-save-btn').addEventListener('click', (e) => { e.preventDefault(); saveRecord(); });
     $('confirm-cancel-btn').addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); closeConfirm(); });
     $('confirm-delete-btn').addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); confirmDelete(); });
     
@@ -238,10 +238,10 @@ function renderTable(rows) {
 
         const actionsCell = `<td class="col-actions">
           <div class="cell-actions">
-            <button class="btn-icon edit" title="Edit" type="button" onclick="event.stopPropagation(); openEditModal(${row.id})">
+            <button class="btn-icon edit" title="Edit" type="button" onclick="event.preventDefault(); event.stopPropagation(); openEditModal(${row.id})">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             </button>
-            <button class="btn-icon delete" title="Delete" type="button" onclick="event.stopPropagation(); openDeleteConfirm(${row.id})">
+            <button class="btn-icon delete" title="Delete" type="button" onclick="event.preventDefault(); event.stopPropagation(); openDeleteConfirm(${row.id})">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
             </button>
           </div>
@@ -339,11 +339,11 @@ function renderPagination() {
     const totalPages = Math.ceil(totalCount / PAGE_SIZE) || 1;
     info.textContent = totalCount > 0 ? `Showing ${(currentPage-1)*PAGE_SIZE+1}–${Math.min(currentPage*PAGE_SIZE, totalCount)} of ${totalCount} records` : 'No records found';
 
-    let html = `<button class="page-btn" onclick="goToPage(${currentPage - 1})" ${currentPage <= 1 ? 'disabled' : ''}>← Prev</button>`;
+    let html = `<button class="page-btn" type="button" onclick="event.preventDefault(); goToPage(${currentPage - 1})" ${currentPage <= 1 ? 'disabled' : ''}>← Prev</button>`;
     for (let i = Math.max(1, currentPage - 3); i <= Math.min(totalPages, currentPage + 3); i++) {
-        html += `<button class="page-btn${i === currentPage ? ' active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+        html += `<button class="page-btn${i === currentPage ? ' active' : ''}" type="button" onclick="event.preventDefault(); goToPage(${i})">${i}</button>`;
     }
-    html += `<button class="page-btn" onclick="goToPage(${currentPage + 1})" ${currentPage >= totalPages ? 'disabled' : ''}>Next →</button>`;
+    html += `<button class="page-btn" type="button" onclick="event.preventDefault(); goToPage(${currentPage + 1})" ${currentPage >= totalPages ? 'disabled' : ''}>Next →</button>`;
     container.innerHTML = html;
 }
 

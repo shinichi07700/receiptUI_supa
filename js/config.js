@@ -12,6 +12,7 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 // Allowed admin emails (only these Google accounts can log in)
 const ALLOWED_EMAILS = [
   'shinichi07700@gmail.com',
+  'brandon.suwarno@gmail.com',
 ];
 
 // Supabase Storage bucket for receipt images

@@ -108,6 +108,38 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
+    // Event delegation for table actions (edit, delete, row selection)
+    $('table-wrapper').addEventListener('click', (e) => {
+        // Handle Edit Button Click
+        const editBtn = e.target.closest('.btn-icon.edit');
+        if (editBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+            const id = parseInt(editBtn.dataset.id, 10);
+            if (!isNaN(id)) openEditModal(id);
+            return;
+        }
+
+        // Handle Delete Button Click
+        const deleteBtn = e.target.closest('.btn-icon.delete');
+        if (deleteBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+            const id = parseInt(deleteBtn.dataset.id, 10);
+            if (!isNaN(id)) openDeleteConfirm(id);
+            return;
+        }
+    });
+
+    $('table-wrapper').addEventListener('change', (e) => {
+        // Handle Row Checkbox Change
+        if (e.target.classList.contains('row-checkbox')) {
+            e.stopPropagation();
+            const id = parseInt(e.target.dataset.id, 10);
+            if (!isNaN(id)) toggleRowSelection(id, e.target.checked);
+        }
+    });
+
     // Inactivity auto-logoff (10 minutes)
     setupInactivityTimer();
 
@@ -195,7 +227,7 @@ function renderTable(rows) {
         const checkboxCell = `
             <td class="col-checkbox">
                 <label class="custom-checkbox">
-                    <input type="checkbox" class="row-checkbox" data-id="${row.id}" ${isChecked ? 'checked' : ''} onchange="event.stopPropagation(); toggleRowSelection(${row.id}, this.checked)">
+                    <input type="checkbox" class="row-checkbox" data-id="${row.id}" ${isChecked ? 'checked' : ''}>
                     <span class="checkmark"></span>
                 </label>
             </td>
@@ -238,11 +270,11 @@ function renderTable(rows) {
 
         const actionsCell = `<td class="col-actions">
           <div class="cell-actions">
-            <button class="btn-icon edit" title="Edit" type="button" onclick="event.preventDefault(); event.stopPropagation(); openEditModal(${row.id})">
+            <button class="btn-icon edit" title="Edit" type="button" data-id="${row.id}">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             </button>
-            <button class="btn-icon delete" title="Delete" type="button" onclick="event.preventDefault(); event.stopPropagation(); openDeleteConfirm(${row.id})">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+            <button class="btn-icon delete" title="Delete" type="button" data-id="${row.id}">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2-2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
             </button>
           </div>
         </td>`;

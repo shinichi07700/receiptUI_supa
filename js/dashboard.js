@@ -908,14 +908,50 @@ async function confirmDelete() {
     if (!deleteTargetId) return;
 
     console.log('[DEBUG] confirmDelete initiated for id:', deleteTargetId);
+    // 1. Fetch the record to get the image paths
+    const { data: record, error: fetchError } = await supabase
+        .from(TABLE_NAME)
+        .select('receipt_image, file_path, thumbnail_link')
+        .eq('id', deleteTargetId)
+        .single();
+    if (fetchError) console.warn('Could not fetch record before delete:', fetchError);
     showLoading(true);
     try {
         const { error } = await supabase
             .from(TABLE_NAME)
             .delete()
             .eq('id', deleteTargetId);
+        if (error) throw error;
 
-        if (error) throw error;
+        // 3. Delete from storage if exist
+        if (record) {
+            const pathsToVerify = [record.receipt_image, record.file_path, record.thumbnail_link].filter(Boolean);
+            const filePathsToDelete = new Set();
+            for (const path of pathsToVerify) {
+                if (path.includes('drive.google.com')) continue;
+                let filePath = path;
+                const bucketSearch = '/' + STORAGE_BUCKET + '/';
+                if (path.includes('/storage/v1/object/')) {
+                    const parts = path.split(bucketSearch);
+                    filePath = parts.length > 1 ? parts[1].split('?')[0] : path;
+                    if (filePath.startsWith('http')) {
+                        const urlParts = filePath.split('/');
+                        const bucketIdx = urlParts.indexOf(STORAGE_BUCKET);
+                        if (bucketIdx !== -1) {
+                            filePath = urlParts.slice(bucketIdx + 1).join('/').split('?')[0];
+                        }
+                    }
+                } else if (!path.startsWith('http')) {
+                    if (filePath.startsWith(STORAGE_BUCKET + '/')) filePath = filePath.substring(STORAGE_BUCKET.length + 1);
+                } else { continue; }
+                if (filePath) filePathsToDelete.add(filePath);
+            }
+            if (filePathsToDelete.size > 0) {
+                const { error: storageError } = await supabase.storage.from(STORAGE_BUCKET).remove(Array.from(filePathsToDelete));
+                if (storageError) console.warn('Failed to delete storage files:', storageError);
+                else console.log('[DEBUG] Deleted storage files:', Array.from(filePathsToDelete));
+            }
+        }
 
         showToast('Receipt deleted', 'success');
         closeConfirm();
